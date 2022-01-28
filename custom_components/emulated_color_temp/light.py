@@ -210,8 +210,6 @@ class EmulatedColorTempLight(light.LightEntity):
     async def async_turn_on(self, **kwargs):
         """Forward the turn_on command to light"""
         data = {ATTR_ENTITY_ID: self._light}
-        
-        emulate_color_temp = False
 
         if ATTR_BRIGHTNESS in kwargs:
             data[ATTR_BRIGHTNESS] = kwargs[ATTR_BRIGHTNESS]
@@ -224,12 +222,7 @@ class EmulatedColorTempLight(light.LightEntity):
 
             state = self.hass.states.get(self._light)
             support = state.attributes.get(ATTR_SUPPORTED_FEATURES)
-            # Only pass color temperature to supported light
-            if bool(support & SUPPORT_COLOR) and not bool(
-                support & SUPPORT_COLOR_TEMP
-            ):
-                emulate_color_temp = True
-                self._color_temp = data[ATTR_COLOR_TEMP]
+            self._color_temp = data[ATTR_COLOR_TEMP]
 
         if ATTR_WHITE_VALUE in kwargs:
             data[ATTR_WHITE_VALUE] = kwargs[ATTR_WHITE_VALUE]
@@ -242,16 +235,6 @@ class EmulatedColorTempLight(light.LightEntity):
 
         if ATTR_FLASH in kwargs:
             data[ATTR_FLASH] = kwargs[ATTR_FLASH]
-
-        if not emulate_color_temp:
-            await self.hass.services.async_call(
-                light.DOMAIN,
-                light.SERVICE_TURN_ON,
-                data,
-                blocking=True,
-                context=self._context,
-            )
-            return
 
         emulate_color_temp_data = data.copy()
         temp_k = color_util.color_temperature_mired_to_kelvin(
