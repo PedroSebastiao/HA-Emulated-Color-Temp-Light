@@ -3,7 +3,8 @@ import asyncio
 from typing import List, Optional, Tuple
 
 import voluptuous as vol
-import colour
+import colour as colour
+import numpy as np
 
 import homeassistant.helpers.config_validation as cv
 # Import the device class from the component that you want to support
@@ -15,6 +16,7 @@ from homeassistant.components.light import (
     ATTR_EFFECT_LIST,
     ATTR_FLASH,
     ATTR_HS_COLOR,
+    ATTR_XY_COLOR,
     ATTR_MAX_MIREDS,
     ATTR_MIN_MIREDS,
     ATTR_TRANSITION,
@@ -50,7 +52,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_ENTITY_ID): cv.entity_domain(light.DOMAIN),
     vol.Required(CONF_NAME): cv.string,
     vol.Optional(CONF_OFFSET, default=0): vol.All(
-            vol.Coerce(int), vol.Range(min=-129, max=500)
+            vol.Coerce(float), vol.Range(min=-0.05, max=0.05)
         ),
     vol.Optional(CONF_UNIQUE_ID): cv.string,
 })
@@ -239,10 +241,16 @@ class EmulatedColorTempLight(light.LightEntity):
 
         emulate_color_temp_data = data.copy()
         temp_k = color_util.color_temperature_mired_to_kelvin(
-            emulate_color_temp_data[ATTR_COLOR_TEMP] + self._offset
+            emulate_color_temp_data[ATTR_COLOR_TEMP]
         )
-        hs_color = color_util.color_temperature_to_hs(temp_k)
-        emulate_color_temp_data[ATTR_HS_COLOR] = hs_color
+
+        temp_cct_duv = np.array([temp_k, self._offset])
+        color_uv = colour.temperature.CCT_to_uv_Ohno2013(temp_cct_duv)
+        color_xy = colour.Luv_uv_to_xy(color_uv)
+
+        hs_color = color_util.color_xy_to_hs(color_xy)
+
+        emulate_color_temp_data[ATTR_XY_COLOR] = color_xy
         del emulate_color_temp_data[ATTR_COLOR_TEMP]
 
         await self.hass.services.async_call(
