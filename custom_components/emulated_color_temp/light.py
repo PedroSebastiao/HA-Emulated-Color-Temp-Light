@@ -3,6 +3,7 @@ import asyncio
 from typing import List, Optional, Tuple
 
 import voluptuous as vol
+import colour
 
 import homeassistant.helpers.config_validation as cv
 # Import the device class from the component that you want to support
