@@ -5,7 +5,7 @@
   "issue_tracker": "https://github.com/Mr-Groch/HA-Emulated-Color-Temp-Light/issues",
   "dependencies": [],
   "codeowners": ["@Mr-Groch"],
-  "requirements": ["colour"],
+  "requirements": ["colour", "numpy"],
   "version": "0.2.0",
   "iot_class": "calculated"
 }
